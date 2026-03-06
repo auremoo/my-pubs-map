@@ -1,0 +1,9 @@
+node_modules/
+.claude/
+dist/
+*.db
+server/data/
+.env
+.DS_Store
+Thumbs.db
+*.log

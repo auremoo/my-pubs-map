@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Pubs Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="header">
+        <div id="header-left">
+          <h1>My Pubs Map</h1>
+          <div id="stats">
+            <span id="stats-text">0 / 0</span>
+            <div id="stats-bar"><div id="stats-fill"></div></div>
+          </div>
+        </div>
+        <div id="controls">
+          <div id="radius-control">
+            <label for="radius"><span id="radius-value">5</span> km</label>
+            <input type="range" id="radius" min="1" max="10" value="5" step="1" />
+          </div>
+          <button id="search-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Rechercher
+          </button>
+          <button id="settings-btn" title="Reglages">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div id="main">
+        <div id="map"></div>
+
+        <aside id="sidebar">
+          <div id="sidebar-handle" aria-label="Toggle sidebar">
+            <div id="handle-bar"></div>
+          </div>
+          <div id="sidebar-top">
+            <div id="sidebar-header">
+              <h2>Bars proches</h2>
+              <span id="bar-count">0</span>
+            </div>
+            <div id="search-bar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="search-input" placeholder="Filtrer par nom..." />
+            </div>
+            <div id="filter-controls">
+              <button class="filter-btn active" data-filter="all">Tous</button>
+              <button class="filter-btn" data-filter="visited">Visites</button>
+              <button class="filter-btn" data-filter="not-visited">A decouvrir</button>
+            </div>
+          </div>
+          <ul id="bar-list"></ul>
+        </aside>
+      </div>
+    </div>
+    <!-- Settings modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h3>Reglages</h3>
+        <div class="setting-group">
+          <label>Source des bars</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="data_source" value="overpass" checked />
+              <span>OpenStreetMap (Overpass)</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="data_source" value="foursquare" />
+              <span>Foursquare</span>
+            </label>
+          </div>
+        </div>
+        <div class="setting-group" id="fsq-key-group" style="display:none">
+          <label for="fsq-key">Cle API Foursquare</label>
+          <input type="password" id="fsq-key" placeholder="fsq3..." autocomplete="off" />
+        </div>
+        <div class="setting-group" id="overpass-info">
+          <p class="setting-hint">Avec Overpass, vous pouvez ajouter des bars manuellement en cliquant sur la carte.</p>
+        </div>
+        <div class="modal-actions">
+          <button id="settings-cancel" class="btn-secondary">Annuler</button>
+          <button id="settings-save" class="btn-primary">Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add bar modal -->
+    <div id="add-bar-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h3>Ajouter un bar</h3>
+        <div class="setting-group">
+          <label for="add-bar-name">Nom du bar</label>
+          <input type="text" id="add-bar-name" placeholder="Nom du bar..." />
+        </div>
+        <p class="setting-hint" id="add-bar-coords"></p>
+        <div class="modal-actions">
+          <button id="add-bar-cancel" class="btn-secondary">Annuler</button>
+          <button id="add-bar-confirm" class="btn-primary">Ajouter</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

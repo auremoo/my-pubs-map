@@ -97,6 +97,14 @@ router.post("/visited", (req: Request, res: Response) => {
   }
 });
 
+// Update notes on a visited bar
+router.put("/visited/:osm_id/notes", (req: Request, res: Response) => {
+  const { osm_id } = req.params;
+  const { notes } = req.body;
+  db.prepare("UPDATE visited_bars SET notes = ? WHERE osm_id = ?").run(notes || null, osm_id);
+  res.json({ success: true });
+});
+
 // Remove a bar from visited
 router.delete("/visited/:osm_id", (req: Request, res: Response) => {
   const { osm_id } = req.params;
@@ -146,6 +154,20 @@ router.put("/settings", (req: Request, res: Response) => {
     stmt.run(key, value);
   }
   res.json({ success: true });
+});
+
+// ── Export ──────────────────────────────
+
+router.get("/export", (_req: Request, res: Response) => {
+  const visited = db
+    .prepare("SELECT osm_id, name, lat, lon, visited_at, notes FROM visited_bars ORDER BY name")
+    .all() as { osm_id: string; name: string; lat: number; lon: number; visited_at: string; notes: string | null }[];
+
+  const custom = db
+    .prepare("SELECT id, name, lat, lon, created_at FROM custom_bars ORDER BY name")
+    .all() as { id: number; name: string; lat: number; lon: number; created_at: string }[];
+
+  res.json({ visited, custom, exported_at: new Date().toISOString() });
 });
 
 // ── Helpers ─────────────────────────────────

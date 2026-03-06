@@ -80,3 +80,32 @@ export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   });
   if (!res.ok) throw new Error("Failed to save settings");
 }
+
+export async function updateNotes(osm_id: string, notes: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/visited/${osm_id}/notes`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ notes }),
+  });
+  if (!res.ok) throw new Error("Failed to update notes");
+}
+
+export interface GeocodingResult {
+  display_name: string;
+  lat: number;
+  lon: number;
+}
+
+export async function searchAddress(query: string): Promise<GeocodingResult[]> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+    { headers: { "User-Agent": "MyPubsMap/1.0" } }
+  );
+  if (!res.ok) throw new Error("Geocoding failed");
+  const data = await res.json();
+  return data.map((r: { display_name: string; lat: string; lon: string }) => ({
+    display_name: r.display_name,
+    lat: parseFloat(r.lat),
+    lon: parseFloat(r.lon),
+  }));
+}

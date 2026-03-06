@@ -8,7 +8,10 @@ import {
   addCustomBar,
   fetchSettings,
   saveSettings,
+  updateNotes,
+  searchAddress,
   type Bar,
+  type VisitedBar,
 } from "./api";
 import {
   initMap,
@@ -21,6 +24,7 @@ import {
 
 let currentBars: Bar[] = [];
 let visitedIds = new Set<string>();
+let visitedNotes = new Map<string, string>();
 let userLat = 0;
 let userLon = 0;
 let currentFilter: "all" | "visited" | "not-visited" = "all";
@@ -57,6 +61,22 @@ const addBarCancel = document.getElementById("add-bar-cancel")!;
 const addBarConfirm = document.getElementById("add-bar-confirm")!;
 const addBarName = document.getElementById("add-bar-name") as HTMLInputElement;
 const addBarCoords = document.getElementById("add-bar-coords")!;
+
+// Address search elements
+const addBarAddress = document.getElementById("add-bar-address") as HTMLInputElement;
+const addressSearchBtn = document.getElementById("address-search-btn")!;
+const addressResults = document.getElementById("address-results")!;
+
+// Notes modal elements
+const notesModal = document.getElementById("notes-modal")!;
+const notesModalTitle = document.getElementById("notes-modal-title")!;
+const notesTextarea = document.getElementById("notes-textarea") as HTMLTextAreaElement;
+const notesCancel = document.getElementById("notes-cancel")!;
+const notesSave = document.getElementById("notes-save")!;
+let notesBarId = "";
+
+// Export button
+const exportBtn = document.getElementById("export-btn")!;
 
 let pendingBarLat = 0;
 let pendingBarLon = 0;
@@ -117,6 +137,8 @@ onMapClick(map, (lat: number, lon: number) => {
   pendingBarLon = lon;
   addBarCoords.textContent = `Position : ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
   addBarName.value = "";
+  addBarAddress.value = "";
+  addressResults.innerHTML = "";
   addBarModal.classList.remove("hidden");
   addBarName.focus();
 });
@@ -157,6 +179,108 @@ addBarConfirm.addEventListener("click", async () => {
 // Allow Enter key in add bar modal
 addBarName.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addBarConfirm.click();
+});
+
+// ── Address search (Nominatim) ──────────
+
+async function doAddressSearch() {
+  const query = addBarAddress.value.trim();
+  if (!query) return;
+  addressResults.innerHTML = '<li class="address-item" style="color:var(--text-muted)">Recherche...</li>';
+  try {
+    const results = await searchAddress(query);
+    addressResults.innerHTML = "";
+    if (results.length === 0) {
+      addressResults.innerHTML = '<li class="address-item" style="color:var(--text-muted)">Aucun resultat</li>';
+      return;
+    }
+    for (const r of results) {
+      const li = document.createElement("li");
+      li.className = "address-item";
+      li.textContent = r.display_name;
+      li.addEventListener("click", () => {
+        pendingBarLat = r.lat;
+        pendingBarLon = r.lon;
+        addBarCoords.textContent = `Position : ${r.lat.toFixed(5)}, ${r.lon.toFixed(5)}`;
+        addressResults.innerHTML = "";
+        addBarAddress.value = "";
+      });
+      addressResults.append(li);
+    }
+  } catch {
+    addressResults.innerHTML = '<li class="address-item" style="color:var(--text-muted)">Erreur de recherche</li>';
+  }
+}
+
+addressSearchBtn.addEventListener("click", doAddressSearch);
+addBarAddress.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    doAddressSearch();
+  }
+});
+
+// ── Notes modal ─────────────────────────
+
+function openNotesModal(bar: Bar) {
+  notesBarId = bar.osm_id;
+  notesModalTitle.textContent = `Notes - ${bar.name}`;
+  notesTextarea.value = visitedNotes.get(bar.osm_id) || "";
+  notesModal.classList.remove("hidden");
+  notesTextarea.focus();
+}
+
+notesCancel.addEventListener("click", () => {
+  notesModal.classList.add("hidden");
+});
+
+notesModal.querySelector(".modal-backdrop")!.addEventListener("click", () => {
+  notesModal.classList.add("hidden");
+});
+
+notesSave.addEventListener("click", async () => {
+  const notes = notesTextarea.value.trim();
+  await updateNotes(notesBarId, notes);
+  if (notes) {
+    visitedNotes.set(notesBarId, notes);
+  } else {
+    visitedNotes.delete(notesBarId);
+  }
+  notesModal.classList.add("hidden");
+  renderBarList();
+});
+
+// ── Export ───────────────────────────────
+
+exportBtn.addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/bars/export");
+    if (!res.ok) throw new Error("Export failed");
+    const data = await res.json();
+
+    // Build CSV
+    const lines = ["Nom,Latitude,Longitude,Visite,Date visite,Notes"];
+    for (const v of data.visited) {
+      lines.push(`"${v.name.replace(/"/g, '""')}",${v.lat},${v.lon},Oui,${v.visited_at},"${(v.notes || "").replace(/"/g, '""')}"`);
+    }
+    for (const c of data.custom) {
+      const isVisited = data.visited.some((v: { osm_id: string }) => v.osm_id === `custom/${c.id}`);
+      if (!isVisited) {
+        lines.push(`"${c.name.replace(/"/g, '""')}",${c.lat},${c.lon},Non,,`);
+      }
+    }
+
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `my-pubs-map-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de l'export.");
+  }
 });
 
 // ── Mobile drawer toggle ────────────────────
@@ -264,8 +388,29 @@ function renderBarList() {
     distance.textContent =
       dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`;
 
-    info.append(name, distance);
-    li.append(check, info);
+    const notes = visitedNotes.get(bar.osm_id);
+    if (notes) {
+      const notesHint = document.createElement("div");
+      notesHint.className = "bar-notes-indicator";
+      notesHint.textContent = notes;
+      info.append(name, distance, notesHint);
+    } else {
+      info.append(name, distance);
+    }
+
+    if (isVisited) {
+      const notesBtn = document.createElement("button");
+      notesBtn.className = "bar-notes-btn";
+      notesBtn.textContent = notes ? "Notes" : "+ Note";
+      notesBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openNotesModal(bar);
+      });
+      li.append(check, info, notesBtn);
+    } else {
+      li.append(check, info);
+    }
+
     li.addEventListener("click", () => {
       panTo(bar.lat, bar.lon);
       if (window.innerWidth <= 768) {
@@ -318,6 +463,9 @@ async function loadBars() {
         distanceKm(userLat, userLon, b.lat, b.lon)
     );
     visitedIds = new Set(visited.map((v) => v.osm_id));
+    visitedNotes = new Map(
+      visited.filter((v) => v.notes).map((v) => [v.osm_id, v.notes!])
+    );
 
     setUserPosition(userLat, userLon, radius);
     displayBars(currentBars, visitedIds, toggleVisited);

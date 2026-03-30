@@ -510,8 +510,56 @@ async function loadBars() {
 
 // ── Init ────────────────────────────────────
 
+const geoPrompt = document.getElementById("geo-prompt")!;
+const geoBtn = document.getElementById("geo-btn")!;
+const header = document.getElementById("header")!;
+const mainEl = document.getElementById("main")!;
+
+function showApp() {
+  geoPrompt.classList.add("hidden");
+  header.classList.remove("hidden");
+  mainEl.classList.remove("hidden");
+  map.invalidateSize(); // Leaflet needs this after container becomes visible
+}
+
+function requestGeolocation() {
+  geoBtn.textContent = "Localisation...";
+  geoBtn.setAttribute("disabled", "true");
+
+  if (!("geolocation" in navigator)) {
+    alert("Votre navigateur ne supporte pas la geolocalisation.");
+    userLat = 48.8566;
+    userLon = 2.3522;
+    showApp();
+    loadBars();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      userLat = pos.coords.latitude;
+      userLon = pos.coords.longitude;
+      showApp();
+      loadBars();
+    },
+    (err) => {
+      console.error("Geolocation error:", err);
+      alert(
+        "Impossible d'obtenir votre position. Verifiez les permissions et reessayez."
+      );
+      geoBtn.textContent = "Localiser";
+      geoBtn.removeAttribute("disabled");
+      // Fallback: show app with default position
+      userLat = 48.8566;
+      userLon = 2.3522;
+      showApp();
+      loadBars();
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+  );
+}
+
 async function init() {
-  // Load settings
   try {
     const settings = await fetchSettings();
     currentSource = settings.data_source;
@@ -519,30 +567,8 @@ async function init() {
     // defaults
   }
 
-  // Geolocation
-  if ("geolocation" in navigator) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        userLat = pos.coords.latitude;
-        userLon = pos.coords.longitude;
-        loadBars();
-      },
-      (err) => {
-        console.error("Geolocation error:", err);
-        alert(
-          "Impossible d'obtenir votre position. Autorisez la geolocalisation et rechargez la page."
-        );
-        userLat = 48.8566;
-        userLon = 2.3522;
-        loadBars();
-      }
-    );
-  } else {
-    alert("Votre navigateur ne supporte pas la geolocalisation.");
-    userLat = 48.8566;
-    userLon = 2.3522;
-    loadBars();
-  }
+  // On user tap, request geolocation (required on mobile)
+  geoBtn.addEventListener("click", requestGeolocation);
 }
 
 init();

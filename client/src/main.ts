@@ -519,22 +519,38 @@ async function init() {
   }
 
   if ("geolocation" in navigator) {
+    // Try high accuracy first, fallback to low accuracy on failure
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         userLat = pos.coords.latitude;
         userLon = pos.coords.longitude;
         loadBars();
       },
-      (err) => {
-        console.error("Geolocation error:", err);
-        alert(
-          "Impossible d'obtenir votre position. Autorisez la geolocalisation et rechargez la page."
+      () => {
+        // Retry without high accuracy (uses network/cell instead of GPS)
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLat = pos.coords.latitude;
+            userLon = pos.coords.longitude;
+            loadBars();
+          },
+          (err) => {
+            console.error("Geolocation error:", err);
+            const msg =
+              err.code === 1
+                ? "Geolocalisation refusee. Autorisez-la dans les reglages de votre navigateur."
+                : err.code === 2
+                  ? "Position indisponible. Verifiez que le site est en HTTPS et que la localisation est activee."
+                  : "Delai d'attente depasse. Verifiez votre connexion.";
+            alert(msg);
+            userLat = 48.8566;
+            userLon = 2.3522;
+            loadBars();
+          },
+          { enableHighAccuracy: false, timeout: 30000, maximumAge: 300000 }
         );
-        userLat = 48.8566;
-        userLon = 2.3522;
-        loadBars();
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   } else {
     userLat = 48.8566;

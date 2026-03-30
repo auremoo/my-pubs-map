@@ -847,6 +847,7 @@ body {
   #search-btn {
     min-width: 44px;
     min-height: 44px;
+    padding: 8px 10px;
     justify-content: center;
   }
 
@@ -855,6 +856,10 @@ body {
     min-width: 44px;
     min-height: 44px;
     justify-content: center;
+  }
+
+  #controls {
+    gap: 8px;
   }
 
   #main {

@@ -40,58 +40,6 @@ body {
   height: 100dvh;
 }
 
-/* ── Utility ────────────────────────────── */
-
-.hidden {
-  display: none !important;
-}
-
-/* ── Geolocation prompt ────────────────── */
-
-#geo-prompt {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 20000;
-}
-
-#geo-prompt.hidden {
-  display: none !important;
-}
-
-.geo-prompt-card {
-  text-align: center;
-  padding: 40px 32px;
-  max-width: 320px;
-}
-
-.geo-prompt-icon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-}
-
-.geo-prompt-card h2 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.geo-prompt-card p {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-  margin-bottom: 24px;
-}
-
-.geo-prompt-card .btn-primary {
-  padding: 14px 40px;
-  font-size: 1rem;
-  border-radius: 12px;
-}
-
 /* ── Header ─────────────────────────────── */
 
 #header {

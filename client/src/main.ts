@@ -10,6 +10,7 @@ import {
   saveSettings,
   updateNotes,
   searchAddress,
+  getExportDataLocal,
   type Bar,
   type VisitedBar,
 } from "./api";
@@ -252,35 +253,46 @@ notesSave.addEventListener("click", async () => {
 
 // ── Export ───────────────────────────────
 
-exportBtn.addEventListener("click", async () => {
-  try {
-    const res = await fetch("/api/bars/export");
-    if (!res.ok) throw new Error("Export failed");
-    const data = await res.json();
+exportBtn.addEventListener("click", () => {
+  const data = getExportDataLocal();
 
-    // Build CSV
-    const lines = ["Nom,Latitude,Longitude,Visite,Date visite,Notes"];
-    for (const v of data.visited) {
-      lines.push(`"${v.name.replace(/"/g, '""')}",${v.lat},${v.lon},Oui,${v.visited_at},"${(v.notes || "").replace(/"/g, '""')}"`);
-    }
-    for (const c of data.custom) {
-      const isVisited = data.visited.some((v: { osm_id: string }) => v.osm_id === `custom/${c.id}`);
-      if (!isVisited) {
-        lines.push(`"${c.name.replace(/"/g, '""')}",${c.lat},${c.lon},Non,,`);
-      }
-    }
-
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `my-pubs-map-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error(err);
-    alert("Erreur lors de l'export.");
+  const lines = ["Nom,Latitude,Longitude,Visite,Date visite,Notes"];
+  for (const v of data.visited) {
+    lines.push(`"${v.name.replace(/"/g, '""')}",${v.lat},${v.lon},Oui,${v.visited_at},"${(v.notes || "").replace(/"/g, '""')}"`);
   }
+  for (const c of data.custom) {
+    const isVisited = data.visited.some((v) => v.osm_id === `custom/${c.id}`);
+    if (!isVisited) {
+      lines.push(`"${c.name.replace(/"/g, '""')}",${c.lat},${c.lon},Non,,`);
+    }
+  }
+
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `my-pubs-map-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ── FAB button (mobile add bar) ─────────
+
+const addBarFab = document.getElementById("add-bar-fab")!;
+addBarFab.addEventListener("click", () => {
+  if (currentSource !== "overpass") {
+    alert("L'ajout manuel n'est disponible qu'en mode Overpass.");
+    return;
+  }
+  const center = map.getCenter();
+  pendingBarLat = center.lat;
+  pendingBarLon = center.lng;
+  addBarCoords.textContent = `Position : ${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`;
+  addBarName.value = "";
+  addBarAddress.value = "";
+  addressResults.innerHTML = "";
+  addBarModal.classList.remove("hidden");
+  addBarName.focus();
 });
 
 // ── Mobile drawer toggle ────────────────────
@@ -288,6 +300,18 @@ exportBtn.addEventListener("click", async () => {
 sidebarHandle.addEventListener("click", () => {
   sidebar.classList.toggle("expanded");
 });
+
+// Swipe gesture on sidebar handle
+let touchStartY = 0;
+sidebarHandle.addEventListener("touchstart", (e) => {
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+sidebarHandle.addEventListener("touchend", (e) => {
+  const touchEndY = e.changedTouches[0].clientY;
+  const diff = touchStartY - touchEndY;
+  if (diff > 30) sidebar.classList.add("expanded");
+  else if (diff < -30) sidebar.classList.remove("expanded");
+}, { passive: true });
 
 // Radius slider
 radiusSlider.addEventListener("input", () => {

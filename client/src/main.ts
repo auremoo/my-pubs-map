@@ -21,6 +21,7 @@ import {
   updateMarkerStyle,
   panTo,
   onMapClick,
+  refreshMap,
 } from "./map";
 
 let currentBars: Bar[] = [];
@@ -305,6 +306,7 @@ addBarFab.addEventListener("click", () => {
 
 sidebarHandle.addEventListener("click", () => {
   sidebar.classList.toggle("expanded");
+  setTimeout(() => refreshMap(), 350);
 });
 
 // Swipe gesture on sidebar handle
@@ -317,6 +319,7 @@ sidebarHandle.addEventListener("touchend", (e) => {
   const diff = touchStartY - touchEndY;
   if (diff > 30) sidebar.classList.add("expanded");
   else if (diff < -30) sidebar.classList.remove("expanded");
+  setTimeout(() => refreshMap(), 350);
 }, { passive: true });
 
 // Radius slider

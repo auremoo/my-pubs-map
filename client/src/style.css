@@ -556,6 +556,35 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* ── Location picker ──────────────────────── */
+
+#location-search-wrap {
+  display: flex;
+  gap: 6px;
+}
+
+#location-search-wrap input {
+  flex: 1;
+}
+
+#location-search-wrap button {
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+#location-results {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+#location-results:empty {
+  display: none;
+}
+
 /* ── Notes textarea ─────────────────────── */
 
 #notes-textarea {

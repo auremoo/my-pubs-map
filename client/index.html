@@ -132,6 +132,25 @@
       </div>
     </div>
 
+    <!-- Location picker modal -->
+    <div id="location-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h3>Ou etes-vous ?</h3>
+        <p class="setting-hint" style="margin-bottom:12px">La geolocalisation n'est pas disponible. Recherchez votre ville ou adresse pour commencer.</p>
+        <div class="setting-group">
+          <label for="location-search">Ville ou adresse</label>
+          <div id="location-search-wrap">
+            <input type="text" id="location-search" placeholder="Lyon, Paris, Marseille..." />
+            <button type="button" id="location-search-btn" class="btn-primary" title="Rechercher">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
+          <ul id="location-results"></ul>
+        </div>
+      </div>
+    </div>
+
     <!-- Notes modal -->
     <div id="notes-modal" class="modal hidden">
       <div class="modal-backdrop"></div>

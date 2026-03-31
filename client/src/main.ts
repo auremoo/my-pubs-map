@@ -76,6 +76,12 @@ const notesCancel = document.getElementById("notes-cancel")!;
 const notesSave = document.getElementById("notes-save")!;
 let notesBarId = "";
 
+// Location picker elements
+const locationModal = document.getElementById("location-modal")!;
+const locationSearch = document.getElementById("location-search") as HTMLInputElement;
+const locationSearchBtn = document.getElementById("location-search-btn")!;
+const locationResults = document.getElementById("location-results")!;
+
 // Export button
 const exportBtn = document.getElementById("export-btn")!;
 
@@ -508,6 +514,51 @@ async function loadBars() {
   }
 }
 
+// ── Location picker (fallback when geolocation fails) ──
+
+function showLocationPicker() {
+  locationSearch.value = "";
+  locationResults.innerHTML = "";
+  locationModal.classList.remove("hidden");
+  locationSearch.focus();
+}
+
+async function doLocationSearch() {
+  const query = locationSearch.value.trim();
+  if (!query) return;
+  locationResults.innerHTML = '<li class="address-item" style="color:var(--text-muted)">Recherche...</li>';
+  try {
+    const results = await searchAddress(query);
+    locationResults.innerHTML = "";
+    if (results.length === 0) {
+      locationResults.innerHTML = '<li class="address-item" style="color:var(--text-muted)">Aucun resultat</li>';
+      return;
+    }
+    for (const r of results) {
+      const li = document.createElement("li");
+      li.className = "address-item";
+      li.textContent = r.display_name;
+      li.addEventListener("click", () => {
+        userLat = r.lat;
+        userLon = r.lon;
+        locationModal.classList.add("hidden");
+        loadBars();
+      });
+      locationResults.append(li);
+    }
+  } catch {
+    locationResults.innerHTML = '<li class="address-item" style="color:var(--text-muted)">Erreur de recherche</li>';
+  }
+}
+
+locationSearchBtn.addEventListener("click", doLocationSearch);
+locationSearch.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    doLocationSearch();
+  }
+});
+
 // ── Init ────────────────────────────────────
 
 async function init() {
@@ -534,18 +585,9 @@ async function init() {
             userLon = pos.coords.longitude;
             loadBars();
           },
-          (err) => {
-            console.error("Geolocation error:", err);
-            const msg =
-              err.code === 1
-                ? "Geolocalisation refusee. Autorisez-la dans les reglages de votre navigateur."
-                : err.code === 2
-                  ? "Position indisponible. Verifiez que le site est en HTTPS et que la localisation est activee."
-                  : "Delai d'attente depasse. Verifiez votre connexion.";
-            alert(msg);
-            userLat = 48.8566;
-            userLon = 2.3522;
-            loadBars();
+          () => {
+            // Both attempts failed — show location picker
+            showLocationPicker();
           },
           { enableHighAccuracy: false, timeout: 30000, maximumAge: 300000 }
         );
@@ -553,9 +595,7 @@ async function init() {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   } else {
-    userLat = 48.8566;
-    userLon = 2.3522;
-    loadBars();
+    showLocationPicker();
   }
 }
 

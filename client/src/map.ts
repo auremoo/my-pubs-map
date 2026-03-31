@@ -43,6 +43,9 @@ export function initMap(containerId: string): L.Map {
 
   markersLayer = L.layerGroup().addTo(map);
 
+  // Ensure tiles render correctly once the layout is stable
+  requestAnimationFrame(() => map.invalidateSize());
+
   return map;
 }
 
@@ -87,6 +90,9 @@ export function setUserPosition(lat: number, lon: number, radiusKm: number) {
   }).addTo(map);
 
   map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+
+  // Force Leaflet to recalculate tile layout after container resize
+  setTimeout(() => map.invalidateSize(), 100);
 }
 
 export function displayBars(
@@ -145,6 +151,10 @@ export function panTo(lat: number, lon: number) {
   if (entry) {
     setTimeout(() => entry.marker.openPopup(), 300);
   }
+}
+
+export function refreshMap() {
+  map.invalidateSize();
 }
 
 export function onMapClick(

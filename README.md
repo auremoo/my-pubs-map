@@ -1,3 +1,6 @@
+> Créé par **Aurélien Moote - Moo - 2026**. Logiciel libre (licence MIT) :
+> réutilisable à condition de conserver la mention de l'auteur.
+
 # My Pubs Map
 
 Application web pour tracker les bars et pubs que tu as visites, affiches sur une carte interactive.
@@ -46,3 +49,10 @@ Ouvre http://localhost:5173 dans ton navigateur.
 ## API
 
 Voir [docs/architecture.md](docs/architecture.md) pour les details.
+
+## Auteur & licence
+
+**Aurélien Moote - Moo - 2026**
+Copyright (c) 2026 Aurélien Moote ("Moo")
+Licence MIT — réutilisable à condition de conserver la mention de l'auteur.
+Voir le fichier [LICENSE](LICENSE) pour les détails complets.

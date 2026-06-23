@@ -1,5 +1,6 @@
 {
   "name": "my-pubs-map-server",
+  "author": "Aurélien Moote - Moo - 2026",
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",

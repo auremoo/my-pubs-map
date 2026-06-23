@@ -1,5 +1,6 @@
 {
   "name": "my-pubs-map",
+  "author": "Aurélien Moote - Moo - 2026",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",

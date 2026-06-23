@@ -1,5 +1,6 @@
 {
   "name": "my-pubs-map-client",
+  "author": "Aurélien Moote - Moo - 2026",
   "private": true,
   "scripts": {
     "dev": "vite",

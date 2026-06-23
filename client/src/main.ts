@@ -1,3 +1,4 @@
+// my-pubs-map — Auteur : Aurélien Moote - Moo - 2026 — Licence MIT
 import "leaflet/dist/leaflet.css";
 import "./style.css";
 import {

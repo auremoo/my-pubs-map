@@ -1,3 +1,4 @@
+// my-pubs-map — Auteur : Aurélien Moote - Moo - 2026 — Licence MIT
 import express from "express";
 import cors from "cors";
 import barsRouter from "./routes/bars";
